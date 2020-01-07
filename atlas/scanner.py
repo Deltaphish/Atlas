@@ -28,7 +28,9 @@ def _tree(start_dir):
     files = []
     for entry in files_in_dir:
         full_path = os.path.join(parent_path, entry)
-        if os.path.isdir(full_path):
+        if _is_sample_or_extra(full_path):
+            continue
+        elif os.path.isdir(full_path):
             files = files + _tree(full_path)
         else:
             files.append(full_path)
@@ -48,6 +50,15 @@ def _is_media_file(file):
     """
     supported_formats = (".mkv", ".avi", ".mp4")
     return file.endswith(supported_formats)
+
+def _is_sample_or_extra(path):
+    lower_path = path.lower()
+    if "extra" in lower_path:
+        return True
+    elif "sample" in lower_path:
+        return True
+    else:
+        return False
 
 def run_scanner(start_dir, media_type, db_loc):
     """
