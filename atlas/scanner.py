@@ -23,10 +23,11 @@ def _tree(start_dir):
             "foo/mar.avi",
         ]
     """
+    parent_path = os.path.abspath(start_dir)
     files_in_dir = os.listdir(start_dir)
     files = []
     for entry in files_in_dir:
-        full_path = os.path.join(start_dir, entry)
+        full_path = os.path.join(parent_path, entry)
         if os.path.isdir(full_path):
             files = files + _tree(full_path)
         else:
@@ -60,15 +61,18 @@ def run_scanner(start_dir, media_type, db_loc):
         db_loc: The location for the database
     """
     conn = sqlite3.connect(db_loc)
-    cursor = conn.cursor()
-
     count = 0
+    dupplicates = 0
 
     all_media = filter(_is_media_file, _tree(start_dir))
     for path in all_media:
-        cursor.execute('INSERT INTO res_index(file_path,media_type) VALUES (?,?);', [path,media_type])
-        count += 1
-    conn.commit()
+        try:
+            with conn:
+                conn.execute('INSERT INTO res_index(file_path,media_type) VALUES (?,?);', [path,media_type])
+                count += 1
+        except sqlite3.IntegrityError:
+            dupplicates += 1
+
     conn.close()
-    return count
+    return (count,dupplicates)
     
